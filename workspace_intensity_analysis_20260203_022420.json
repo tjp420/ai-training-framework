@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-02-03T02:24:20.385335",
+  "samples": [
+    {
+      "overall_intensity": 0.3199702820007324,
+      "objective_scores": {
+        "cpu_efficiency": 0.55,
+        "memory_utilization": 1.0,
+        "power_consumption": 0.71,
+        "process_distribution": 0.0,
+        "computational_load": 0.19849999999999998,
+        "resource_stability": 0.618512,
+        "processing_throughput": 0.06269082000732422,
+        "system_responsiveness": 0.0,
+        "thermal_efficiency": 0.06,
+        "workload_distribution": 0.0
+      },
+      "intensity_level": "LOW_INTENSITY",
+      "timestamp": "2026-02-03T02:23:11.376370"
+    },
+    {
+      "overall_intensity": 0.4075786777262761,
+      "objective_scores": {
+        "cpu_efficiency": 0.40499999999999997,
+        "memory_utilization": 1.0,
+        "power_consumption": 0.7207692307692308,
+        "process_distribution": 0.714,
+        "computational_load": 0.2375,
+        "resource_stability": 0.803432,
+        "processing_throughput": 0.11408554649353027,
+        "system_responsiveness": 0.0,
+        "thermal_efficiency": 0.081,
+        "workload_distribution": 0.0
+      },
+      "intensity_level": "NORMAL_INTENSITY",
+      "timestamp": "2026-02-03T02:23:28.742381"
+    },
+    {
+      "overall_intensity": 0.3686287228769156,
+      "objective_scores": {
+        "cpu_efficiency": 0.445,
+        "memory_utilization": 1.0,
+        "power_consumption": 0.6984615384615385,
+        "process_distribution": 0.33299999999999996,
+        "computational_load": 0.20049999999999998,
+        "resource_stability": 0.70506,
+        "processing_throughput": 0.24726569030761716,
+        "system_responsiveness": 0.0,
+        "thermal_efficiency": 0.057,
+        "workload_distribution": 0.0
+      },
+      "intensity_level": "LOW_INTENSITY",
+      "timestamp": "2026-02-03T02:23:46.202307"
+    },
+    {
+      "overall_intensity": 0.4086638596074031,
+      "objective_scores": {
+        "cpu_efficiency": 0.47000000000000003,
+        "memory_utilization": 1.0,
+        "power_consumption": 0.6692307692307693,
+        "process_distribution": 0.5,
+        "computational_load": 0.209,
+        "resource_stability": 0.9358,
+        "processing_throughput": 0.1776078268432617,
+        "system_responsiveness": 0.0,
+        "thermal_efficiency": 0.125,
+        "workload_distribution": 0.0
+      },
+      "intensity_level": "NORMAL_INTENSITY",
+      "timestamp": "2026-02-03T02:24:03.381135"
+    },
+    {
+      "overall_intensity": 0.35217967655627913,
+      "objective_scores": {
+        "cpu_efficiency": 0.43499999999999994,
+        "memory_utilization": 1.0,
+        "power_consumption": 0.6776923076923077,
+        "process_distribution": 0.14300000000000002,
+        "computational_load": 0.204,
+        "resource_stability": 0.968916,
+        "processing_throughput": 0.012188457870483399,
+        "system_responsiveness": 0.0,
+        "thermal_efficiency": 0.081,
+        "workload_distribution": 0.0
+      },
+      "intensity_level": "LOW_INTENSITY",
+      "timestamp": "2026-02-03T02:24:20.382250"
+    }
+  ],
+  "aggregate_metrics": {
+    "average": 0.37140424375352127,
+    "maximum": 0.4086638596074031,
+    "minimum": 0.3199702820007324,
+    "range": 0.08869357760667068
+  },
+  "classification": "LOW_INTENSITY",
+  "recommendations": [
+    "Optimize CPU workload distribution",
+    "Improve AI process load balancing",
+    "Enhance processing pipeline efficiency",
+    "Implement better workload scheduling",
+    "Monitor memory usage for potential leaks"
+  ]
+}
