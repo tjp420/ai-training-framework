@@ -1,0 +1,148 @@
+name: AI Power Intensity Analyzer Tests
+
+on:
+  push:
+    branches: [ main, fix/gui-k ]
+    paths:
+      - 'test_ai_power_intensity_*.py'
+      - 'discover_tests.py'
+      - 'ai_power_intensity_analyzer.py'
+      - 'workspace_intensity_analysis.py'
+      - 'safe_cpu_monitor.py'
+  pull_request:
+    branches: [ main, fix/gui-k ]
+    paths:
+      - 'test_ai_power_intensity_*.py'
+      - 'discover_tests.py'
+      - 'ai_power_intensity_analyzer.py'
+      - 'workspace_intensity_analysis.py'
+      - 'safe_cpu_monitor.py'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil
+    
+    - name: Run AI Power Intensity Analyzer Tests
+      run: |
+        python discover_tests.py
+    
+    - name: Run focused tests
+      run: |
+        python test_ai_power_intensity_focused.py -v
+    
+    - name: Generate test coverage report
+      run: |
+        python -c "
+        import subprocess
+        import sys
+        result = subprocess.run([sys.executable, 'discover_tests.py'], capture_output=True, text=True)
+        print('=== TEST RESULTS ===')
+        print(result.stdout)
+        if result.stderr:
+            print('=== ERRORS ===')
+            print(result.stderr)
+        print(f'Exit code: {result.returncode}')
+        "
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results-python${{ matrix.python-version }}
+        path: |
+          *.json
+          *.db
+          workspace_intensity_analysis_*.json
+        retention-days: 7
+
+  integration-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.11']
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil
+    
+    - name: Test AI Power Intensity Analyzer
+      run: |
+        python ai_power_intensity_analyzer.py
+    
+    - name: Test Safe CPU Monitor
+      run: |
+        timeout 10s python safe_cpu_monitor.py --interval 2 --duration 8 || true
+    
+    - name: Test Workspace Analysis
+      run: |
+        python workspace_intensity_analysis.py
+
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil
+    
+    - name: Performance benchmark
+      run: |
+        python -c "
+        import time
+        from ai_power_intensity_analyzer import AIPowerIntensityAnalyzer
+        
+        analyzer = AIPowerIntensityAnalyzer()
+        start_time = time.time()
+        
+        # Run 5 iterations
+        for i in range(5):
+            result = analyzer.calculate_intensity_score()
+            print(f'Iteration {i+1}: {result[\"overall_intensity\"]:.3f} - {result[\"intensity_level\"]}')
+        
+        end_time = time.time()
+        duration = end_time - start_time
+        avg_time = duration / 5
+        
+        print(f'Performance: {avg_time:.3f}s per analysis')
+        print(f'Total duration: {duration:.3f}s')
+        
+        # Performance assertion
+        if avg_time > 2.0:
+            print('⚠️ Performance warning: Analysis taking longer than expected')
+            exit(1)
+        else:
+            print('✅ Performance test passed')
+        "

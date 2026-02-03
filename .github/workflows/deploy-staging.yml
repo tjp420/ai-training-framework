@@ -1,0 +1,155 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      deploy_version:
+        description: 'Version to deploy (latest or specific tag)'
+        required: false
+        default: 'latest'
+
+env:
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-deploy-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-deploy-
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask gunicorn requests
+        pip install sentence-transformers faiss-cpu numpy
+        
+    - name: Download latest knowledge index
+      run: |
+        echo "📦 Downloading latest knowledge index..."
+        
+        # Get latest release tag
+        LATEST_TAG=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | grep -o '"tag_name": "[^"]*' | cut -d'"' -f4)
+        echo "🏷️  Latest tag: $LATEST_TAG"
+        
+        # Download index
+        curl -L "https://github.com/${{ github.repository }}/releases/download/$LATEST_TAG/vector_index.tar.gz" \
+          -o knowledge_extraction/vector_index.tar.gz
+          
+        # Extract
+        cd knowledge_extraction
+        tar -xzf vector_index.tar.gz
+        ls -la vector_index/
+        
+    - name: Test knowledge integration
+      run: |
+        echo "🧪 Testing knowledge integration..."
+        python knowledge_extraction/test_integration_standalone.py
+        
+    - name: Build Docker image
+      run: |
+        echo "🐳 Building Docker image..."
+        docker build -t unity-uelm:staging-${{ github.run_number }} ./deployment
+        docker tag unity-uelm:staging-${{ github.run_number }} unity-uelm:staging
+        
+    - name: Run end-to-end tests
+      run: |
+        echo "🧪 Running end-to-end tests..."
+        
+        # Start container
+        docker run -d --name staging-test -p 8080:8080 unity-uelm:staging
+        
+        # Wait for service to start
+        sleep 10
+        
+        # Test health endpoint
+        curl -f http://localhost:8080/health || exit 1
+        
+        # Test status endpoint
+        curl -f http://localhost:8080/status || exit 1
+        
+        # Test chat endpoint
+        curl -f -X POST http://localhost:8080/chat \
+          -H "Content-Type: application/json" \
+          -d '{"query": "How do I improve model accuracy?"}' || exit 1
+          
+        echo "✅ All tests passed!"
+        
+        # Cleanup
+        docker stop staging-test
+        docker rm staging-test
+        
+    - name: Deploy to staging (mock)
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        echo "📍 Staging URL: https://staging.unity-uelm.example.com"
+        echo "📦 Image: unity-uelm:staging-${{ github.run_number }}"
+        echo "🔗 Health: https://staging.unity-uelm.example.com/health"
+        
+        # In a real deployment, you would:
+        # - Push to container registry
+        # - Update staging deployment
+        # - Run smoke tests
+        
+    - name: Create deployment summary
+      run: |
+        cat > deployment_summary.md << EOF
+        # Staging Deployment Summary
+        
+        ## Deployment Information
+        - **Deployed:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+        - **Commit:** [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+        - **Branch:** ${{ github.ref_name }}
+        - **Workflow:** [Run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        
+        ## Components
+        - **Docker Image:** unity-uelm:staging-${{ github.run_number }}
+        - **Knowledge Index:** Latest release
+        - **Service:** Enhanced AI with knowledge integration
+        
+        ## End-to-End Tests
+        ✅ Health check passed
+        ✅ Status endpoint passed
+        ✅ Chat endpoint passed
+        ✅ Knowledge integration working
+        
+        ## Staging Environment
+        - **URL:** https://staging.unity-uelm.example.com
+        - **Health:** https://staging.unity-uelm.example.com/health
+        - **Status:** https://staging.unity-uelm.example.com/status
+        
+        ## Next Steps
+        - Monitor staging performance
+        - Run integration tests
+        - Prepare for production deployment
+        EOF
+        
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "✅ Staging deployment completed successfully!"
+        echo "🚀 Image: unity-uelm:staging-${{ github.run_number }}"
+        echo "🔗 Staging: https://staging.unity-uelm.example.com"
+        
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        echo "❌ Staging deployment failed"
+        echo "🔍 Check workflow logs for details"

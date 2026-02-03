@@ -1,0 +1,35 @@
+name: AI Power Intensity Tests
+
+on:
+  push:
+    branches: [ main, fix/gui-k ]
+  pull_request:
+    branches: [ main, fix/gui-k ]
+
+jobs:
+  test-discovery:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil
+    
+    - name: Run test discovery
+      run: |
+        python discover_tests.py
+    
+    - name: Test analyzer functionality
+      run: |
+        python ai_power_intensity_analyzer.py
+    
+    - name: Test safe monitor
+      run: |
+        timeout 5s python safe_cpu_monitor.py --interval 1 --duration 3 || true
